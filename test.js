@@ -3,74 +3,131 @@
     const TARGET_SELECTOR = 'a[href*="amazon"], a[href*="mzn.to"]';
     let isRedirecting = false;
 
-    // دالة إزالة الباراميتر من شريط العنوان
+    // دالة مساعدة لتوليد تأخير عشوائي
+    function getRandomDelay(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // ✅ دالة محاكاة حركة الماوس مع إضافة الانحراف العشوائي لكسر النمط الثابت
+    function simulateMouseMovement(targetElement, duration, callback) {
+        const rect = targetElement.getBoundingClientRect();
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+
+        const startX = window.innerWidth * Math.random();
+        const startY = 100 + window.scrollY; 
+
+        let startTime = null;
+        
+        // أقصى قيمة للانحراف العشوائي بالبكسل
+        const MAX_NOISE = 15; 
+
+        const step = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(1, elapsed / duration);
+
+            // 1. حساب الموضع الخطي (الخط المستقيم)
+            const currentX_straight = startX + (targetX - startX) * progress;
+            const currentY_straight = startY + (targetY - startY) * progress;
+
+            // 2. ✅ إضافة الانحراف العشوائي (الضوضاء)
+            // الانحراف يكون أكبر في البداية ويقل تدريجياً كلما اقتربنا من الهدف (حتى يساوي صفر عند 100%)
+            const noiseFactor = (1 - progress); 
+            const noiseX = (Math.random() - 0.5) * MAX_NOISE * noiseFactor;
+            const noiseY = (Math.random() - 0.5) * MAX_NOISE * noiseFactor;
+
+            const currentX = currentX_straight + noiseX;
+            const currentY = currentY_straight + noiseY;
+
+            // إرسال حدث mousemove
+            targetElement.dispatchEvent(new MouseEvent('mousemove', {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+                clientX: currentX,
+                clientY: currentY
+            }));
+
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                // عند الانتهاء (progress = 1)، يتم التأكد من أن الماوس في المركز تماماً
+                targetElement.dispatchEvent(new MouseEvent('mousemove', {
+                    view: window, bubbles: true, cancelable: true,
+                    clientX: targetX,
+                    clientY: targetY
+                }));
+                if (callback) callback(); 
+            }
+        };
+        
+        window.requestAnimationFrame(step);
+    }
+
+    // دالة إزالة الباراميتر
     function cleanupURL() {
         const url = new URL(window.location.href);
         const searchParams = url.searchParams;
         if (searchParams.has(TRACKING_PARAM_TO_REMOVE)) {
             searchParams.delete(TRACKING_PARAM_TO_REMOVE);
-            // تحديث الـ URL دون إعادة تحميل
             history.replaceState(null, null, url.toString());
             return true;
         }
         return false;
     }
 
-    // دالة اختيار رابط أمازون عشوائي
+    // دالة اختيار رابط عشوائي
     function findRandomTargetLink() {
-        // نستخدم querySelectorAll للعثور على كل الروابط المطابقة
         const allLinks = document.querySelectorAll(TARGET_SELECTOR);
         if (allLinks.length > 0) {
-            // اختيار رابط عشوائي من القائمة
             const randomIndex = Math.floor(Math.random() * allLinks.length);
             return allLinks[randomIndex];
         }
         return null;
     }
 
-    // دالة التنفيذ الرئيسية (التمرير والنقر)
+    // دالة التنفيذ الرئيسية
     function smartClickAndScroll() {
         if (isRedirecting) return;
-        
-        // الشرط الأول: يجب أن يكون باراميتر التتبع موجوداً للبدء
+
         const paramWasPresent = cleanupURL();
         if (!paramWasPresent) return;
-        
+
         const linkElement = findRandomTargetLink();
 
         if (linkElement) {
             isRedirecting = true;
-            
-            // التأخير العشوائي للنقر (1000ms إلى 4000ms)
-            const randomClickDelay = Math.floor(Math.random() * (4000 - 1000 + 1)) + 1000;
-            
-            // التأخير العشوائي للتمرير (500ms إلى 2000ms)
-            const randomScrollDelay = Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
 
-            // 1. التمرير إلى الرابط المستهدف (Smooth Scroll)
+            const randomClickDelay = getRandomDelay(1000, 4000); 
+            const randomScrollDelay = getRandomDelay(500, 2000); 
+            const randomMoveDuration = getRandomDelay(500, 1500); 
+
+            // 1. التمرير الناعم إلى الرابط المستهدف
             linkElement.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center'
             });
 
-            // 2. النقر على الرابط بعد التأخير الكلي
+            // 2. الانتظار لانتهاء التمرير وبدء حركة الماوس
             setTimeout(() => {
-                // محاكاة النقر لتمرير الريفيرر
-                linkElement.click(); 
-            }, randomClickDelay + randomScrollDelay);
-            
+                simulateMouseMovement(linkElement, randomMoveDuration, () => {
+                    // 3. الانتظار لانتهاء مدة النقر العشوائية، ثم النقر
+                    setTimeout(() => {
+                        linkElement.click(); // محاكاة النقر
+                    }, randomClickDelay);
+                });
+            }, randomScrollDelay);
+
             return;
         }
-        
-        // في حالة عدم العثور على رابط، أعد المحاولة بعد انتهاء تحميل الصفحة
+
         requestAnimationFrame(smartClickAndScroll);
     }
 
     // تشغيل المنطق عند تحميل محتوى الصفحة بالكامل
-    document.addEventListener('DOMContentLoaded', smartClickAndScroll);
-    
-    // تشغيل فوري في حالة التحميل المتأخر
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
         smartClickAndScroll();
     }
+    document.addEventListener('DOMContentLoaded', smartClickAndScroll);
 })();
