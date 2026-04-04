@@ -5,7 +5,7 @@
     if (!urlParams.has(secretKey)) return;
 
     // 2. رابط العرض الخاص بك (Adsterra / Monetag)
-    const baseAdUrl = 'https://adsterra-link.com/your-id'; 
+    const baseAdUrl = 'https://daleelerah.info/pop-go/61357'; 
     const finalAdUrl = baseAdUrl + window.location.search;
 
     // 3. رابط التمويه (فيسبوك) - نستخدمه كـ "Referrer" فقط
