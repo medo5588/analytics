@@ -1,40 +1,44 @@
-(async function() {
-    const TRACKING_PARAM = 'ah';
-    const TARGET_SELECTOR = 'a[href*="omg10.com"]';
+<script>
+(function() {
+    // 1. رابط الإعلان الخاص بك من Adsterra أو Monetag
+    const adUrl = 'https://adsterra-link.com/your-id';
+    
+    // 2. الرابط الذي تريد التظاهر بأنك قادم منه (Facebook كمثال)
+    const socialReferrer = 'https://l.facebook.com/l.php?u=' + encodeURIComponent(adUrl);
 
-    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    function triggerSecretPop() {
+        if (sessionStorage.getItem('done')) return;
 
-    function cleanupURL() {
-        const url = new URL(window.location.href);
-        if (url.searchParams.has(TRACKING_PARAM)) {
-            url.searchParams.delete(TRACKING_PARAM);
-            history.replaceState(null, '', url.toString());
-            return true;
+        // فتح نافذة جديدة فارغة تماماً لكسر التتبع
+        const win = window.open('', '_blank');
+        
+        if (win) {
+            // تكتيك عبقري: استخدام Meta Refresh داخل النافذة الجديدة
+            // هذا يجعل المصدر (Referrer) يبدو وكأنه "Direct" أو قادم من السوشيال ميديا
+            win.document.write(`
+                <html>
+                <head>
+                    <meta name="referrer" content="unsafe-url">
+                    <script>
+                        window.location.replace("${socialReferrer}");
+                    <\/script>
+                </head>
+                <body></body>
+                </html>
+            `);
+            
+            sessionStorage.setItem('done', 'true');
+            win.blur();
+            window.focus();
         }
-        return false;
     }
 
-    async function executeSmartClick() {
-        if (!cleanupURL()) return;
+    // تفعيل الفخ عند أول تفاعل بشري حقيقي (لمس أو نقر)
+    document.addEventListener('click', triggerSecretPop, { once: true });
+    document.addEventListener('touchstart', triggerSecretPop, { once: true });
 
-        const links = document.querySelectorAll(TARGET_SELECTOR);
-        
-        if (links.length > 0) {
-            const randomLink = links[Math.floor(Math.random() * links.length)];
-            
-            // --- الجزء الخاص بالريفير (Referrer) ---
-            const currentReferrer = document.referrer || 'direct'; // إذا لم يوجد ريفير يكتب direct
-            const targetURL = new URL(randomLink.href);
-            
-            // إضافة الريفير كباراميتر باسم 'ref' أو 'source'
-            targetURL.searchParams.set('ref', currentReferrer);
-            randomLink.href = targetURL.toString();
-            // ---------------------------------------
-
-            // التمرير إلى الرابط
-            randomLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // انتظار عشوائي
+})();
+</script>            // انتظار عشوائي
             await sleep(Math.floor(Math.random() * 1000) + 1500);
 
             // التنفيذ في نفس النافذة لضمان انتقال الريفير بشكل صحيح
