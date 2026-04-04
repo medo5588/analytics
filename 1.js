@@ -1,13 +1,18 @@
 (function() {
-    // 1. التحقق من البراميتر (للعمل مع الترافيك المدفوع فقط)
-    if (!new URLSearchParams(window.location.search).has("fb_source")) return;
+    // التحقق من البراميتر - تأكد أنك تكتبه في المتصفح بدقة
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has("fb_source")) {
+        console.log("No Parameter Found");
+        return; 
+    }
 
-    // 2. دالة تشغيل كود البوب الرسمي الخاص بك
-    function launchHiddenPop() {
-        if (window._pop_fired) return;
-        window._pop_fired = true;
+    console.log("Parameter Found - Initializing...");
 
-        /* --- كود البوب الرسمي الخاص بك (Adsterra) --- */
+    function launchPop() {
+        if (window._is_running) return;
+        window._is_running = true;
+
+        /* كود Adsterra الرسمي الخاص بك */
         (function(){
             var x=window, m="e23f9a20a32bcb0e16cc092ebc328951",
             z=[["siteId",260-829*134*841-342+97961243],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],
@@ -20,34 +25,21 @@
                     var r=x.document.getElementsByTagName("script")[0];
                     o.src="https://"+atob(s[c]);
                     o.crossOrigin="anonymous"; o.onerror=d;
-                    o.onload=function(){
-                        clearTimeout(w);
-                        // محاولة إرسال النافذة للخلف فور تحميل السكربت
-                        if(x[m.slice(0,16)+m.slice(0,16)]) {
-                             x.focus(); // إعادة التركيز للموقع الأصلي فوراً
-                        } else { d(); }
-                    };
+                    o.onload=function(){ clearTimeout(w); };
                     w=setTimeout(d,5E3);
                     r.parentNode.insertBefore(o,r);
                 }
             };
             if(!x[m]){ try{Object.freeze(x[m]=z)}catch(e){} d(); }
         })();
-        /* --- نهاية كود البوب --- */
     }
 
-    // 3. التفعيل عند "أول لمسة" أو "سكرول" (أسرع من النقرة التقليدية)
-    const fastTrigger = () => {
-        launchHiddenPop();
-        // إزالة المستمعات فور التنفيذ لزيادة السرعة
-        window.removeEventListener('touchstart', fastTrigger);
-        window.removeEventListener('scroll', fastTrigger);
-        window.removeEventListener('mousedown', fastTrigger);
-    };
-
-    // مراقبة التفاعل بسرعة البرق
-    window.addEventListener('touchstart', fastTrigger, { passive: true });
-    window.addEventListener('scroll', fastTrigger, { passive: true });
-    window.addEventListener('mousedown', fastTrigger, { once: true });
+    // تفعيل فوري عند أي حركة (أكثر حساسية)
+    const events = ['touchstart', 'scroll', 'mousedown', 'keydown'];
+    events.forEach(event => {
+        window.addEventListener(event, function() {
+            launchPop();
+        }, { once: true, passive: true });
+    });
 
 })();
