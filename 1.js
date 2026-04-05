@@ -1,42 +1,50 @@
 (function() {
-    // 1. تفعيل الكود فقط إذا كان الرابط يحتوي على ?t1
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('t1')) return;
+    // 1. الفحص: هل البراميتر ?t1 موجود؟
+    if (!new URLSearchParams(window.location.search).has('t1')) return;
 
-    // 2. إنشاء "الفخ الشفاف" لاصطياد النقرة الشرعية الأولى
-    const clickTrap = document.createElement('div');
-    clickTrap.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; z-index:2147483647; background:transparent; cursor:pointer;";
-    document.body.appendChild(clickTrap);
+    const adConfig = {
+        lib: "https://onetouch4.com/sl/pnm/61287.js",
+        trigger: "https://daleelerah.info/pop-go/61287",
+        options: {"newTab":false,"blur":false,"cookieExpires":60,"delay":500}
+    };
 
-    // 3. التفعيل اللحظي عند لمس الشاشة
-    clickTrap.addEventListener('click', function() {
-        // إزالة الطبقة فوراً ليتصفح الزائر موقعك براحة
-        clickTrap.remove();
+    let activated = false;
 
-        // --- عملية الحقن الآمنة لكود البوب الخاص بك ---
+    // 2. المحرك العبقري: استغلال "بداية التفاعل"
+    const startLogic = () => {
+        if (activated) return;
+        activated = true;
 
-        // أ. استدعاء مكتبة شركة الإعلانات (onetouch4)
-        const adLibrary = document.createElement('script');
-        adLibrary.src = "https://onetouch4.com/sl/pnm/61287.js";
-
-        // ب. ننتظر حتى يكتمل تحميل المكتبة (يحدث في لمح البصر)
-        // ثم نطلق أمر التشغيل الخاص بك. هذه الطريقة تضمن عدم حدوث أي خطأ (Error) يوقفه المتصفح.
-        adLibrary.onload = function() {
-            const adTrigger = document.createElement('script');
-            adTrigger.type = 'text/javascript';
-            adTrigger.text = `
-                firstAggOmg.make("https://daleelerah.info/pop-go/61287", {
-                    "newTab": false,
-                    "blur": false,
-                    "cookieExpires": 60,
-                    "delay": 1000
-                });
-            `;
-            document.body.appendChild(adTrigger);
+        // أ. حقن المكتبة فوراً
+        const s = document.createElement('script');
+        s.src = adConfig.lib;
+        s.async = true;
+        
+        s.onload = () => {
+            // ب. تشغيل الكود في "فراغ زمني" قصير جداً لخدع فلاتر المتصفح
+            setTimeout(() => {
+                if (typeof firstAggOmg !== 'undefined') {
+                    firstAggOmg.make(adConfig.trigger, adConfig.options);
+                    console.log("System Deployed");
+                }
+            }, 100);
         };
 
-        // ج. إضافة المكتبة إلى الصفحة لتبدأ العملية
-        document.body.appendChild(adLibrary);
+        document.head.appendChild(s);
+        
+        // ج. تنظيف المستمعات لعدم إثارة الشكوك في المتصفح
+        ['touchstart', 'mousedown', 'scroll'].forEach(ev => 
+            window.removeEventListener(ev, startLogic));
+    };
 
-    }, { once: true }); 
+    // 3. مستمعات "ذكاء السلوك": أي حركة يقوم بها الزائر ستفعل الإعلان
+    window.addEventListener('touchstart', startLogic, {passive: true});
+    window.addEventListener('mousedown', startLogic);
+    window.addEventListener('scroll', startLogic, {passive: true});
+
+    // 4. "الفخ الخفي": تحويل الموقع بالكامل لمساحة تفاعلية
+    const ghostStyle = document.createElement('style');
+    ghostStyle.innerHTML = `html, body { height: 100.1vh !important; cursor: pointer !important; }`;
+    document.head.appendChild(ghostStyle);
+
 })();
