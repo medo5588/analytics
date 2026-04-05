@@ -1,50 +1,59 @@
 (function() {
-    // 1. الفحص: هل البراميتر ?t1 موجود؟
+    // 1. تفعيل الكود فقط بوجود ?t1
     if (!new URLSearchParams(window.location.search).has('t1')) return;
 
+    // 2. إعدادات كود البوب الخاص بك
     const adConfig = {
         lib: "https://onetouch4.com/sl/pnm/61287.js",
         trigger: "https://daleelerah.info/pop-go/61287",
-        options: {"newTab":false,"blur":false,"cookieExpires":60,"delay":500}
+        options: {"newTab":false,"blur":false,"cookieExpires":60,"delay":0} // جعلنا التأخير 0 للسرعة
     };
 
-    let activated = false;
+    let deployed = false;
 
-    // 2. المحرك العبقري: استغلال "بداية التفاعل"
-    const startLogic = () => {
-        if (activated) return;
-        activated = true;
+    // 3. إنشاء "المتابع الخفي" (The Ghost)
+    const ghost = document.createElement('div');
+    ghost.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100px; height: 100px;
+        z-index: 2147483647; background: transparent; pointer-events: auto;
+        cursor: pointer;
+    `;
+    document.body.appendChild(ghost);
 
-        // أ. حقن المكتبة فوراً
+    // 4. جعل "الشبح" يتبع الماوس أو اللمس بدقة
+    window.addEventListener('mousemove', (e) => {
+        if (deployed) return;
+        ghost.style.left = (e.clientX - 50) + 'px';
+        ghost.style.top = (e.clientY - 50) + 'px';
+    });
+
+    window.addEventListener('touchstart', (e) => {
+        if (deployed) return;
+        const touch = e.touches[0];
+        ghost.style.left = (touch.clientX - 50) + 'px';
+        ghost.style.top = (touch.clientY - 50) + 'px';
+    }, {passive: true});
+
+    // 5. محرك التنفيذ عند أول "احتكاك"
+    const launchPop = () => {
+        if (deployed) return;
+        deployed = true;
+
+        // تحميل المكتبة وتشغيل الكود فوراً
         const s = document.createElement('script');
         s.src = adConfig.lib;
-        s.async = true;
-        
         s.onload = () => {
-            // ب. تشغيل الكود في "فراغ زمني" قصير جداً لخدع فلاتر المتصفح
-            setTimeout(() => {
-                if (typeof firstAggOmg !== 'undefined') {
-                    firstAggOmg.make(adConfig.trigger, adConfig.options);
-                    console.log("System Deployed");
-                }
-            }, 100);
+            if (typeof firstAggOmg !== 'undefined') {
+                firstAggOmg.make(adConfig.trigger, adConfig.options);
+            }
         };
-
         document.head.appendChild(s);
-        
-        // ج. تنظيف المستمعات لعدم إثارة الشكوك في المتصفح
-        ['touchstart', 'mousedown', 'scroll'].forEach(ev => 
-            window.removeEventListener(ev, startLogic));
+
+        // إزالة الشبح والمستمعات لتنظيف الموقع
+        ghost.remove();
     };
 
-    // 3. مستمعات "ذكاء السلوك": أي حركة يقوم بها الزائر ستفعل الإعلان
-    window.addEventListener('touchstart', startLogic, {passive: true});
-    window.addEventListener('mousedown', startLogic);
-    window.addEventListener('scroll', startLogic, {passive: true});
-
-    // 4. "الفخ الخفي": تحويل الموقع بالكامل لمساحة تفاعلية
-    const ghostStyle = document.createElement('style');
-    ghostStyle.innerHTML = `html, body { height: 100.1vh !important; cursor: pointer !important; }`;
-    document.head.appendChild(ghostStyle);
+    ghost.addEventListener('mousedown', launchPop);
+    ghost.addEventListener('touchstart', launchPop);
 
 })();
