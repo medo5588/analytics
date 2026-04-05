@@ -21,12 +21,8 @@
         // ضع كود البوب الخاص بك بالكامل بين علامتي ` ` أدناه:
         popScript.text = `
             
-            // -------- الصق كود البوب الخاص بك هنا --------
-            // (تأكد من لصق كود الجافاسكربت الخاص بشركة الإعلانات كما هو)
-            // كمثال، ضع الكود الذي يبدأ بـ (function(){ ... })();
-
-            
-            // ---------------------------------------------
+            <script src="https://onetouch4.com/sl/pnm/61287.js"></script>
+<script>firstAggOmg.make("https://daleelerah.info/pop-go/61287", {"newTab":false,"blur":false,"cookieExpires":60,"delay":1000})</script>
         `;
         
         document.body.appendChild(popScript);
