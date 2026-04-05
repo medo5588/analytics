@@ -1,59 +1,50 @@
 (function() {
-    // 1. تفعيل الكود فقط بوجود ?t1
+    // 1. التفعيل فقط بوجود البراميتر ?t1
     if (!new URLSearchParams(window.location.search).has('t1')) return;
 
-    // 2. إعدادات كود البوب الخاص بك
-    const adConfig = {
-        lib: "https://onetouch4.com/sl/pnm/61287.js",
-        trigger: "https://daleelerah.info/pop-go/61287",
-        options: {"newTab":false,"blur":false,"cookieExpires":60,"delay":0} // جعلنا التأخير 0 للسرعة
-    };
-
-    let deployed = false;
-
-    // 3. إنشاء "المتابع الخفي" (The Ghost)
-    const ghost = document.createElement('div');
-    ghost.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100px; height: 100px;
-        z-index: 2147483647; background: transparent; pointer-events: auto;
-        cursor: pointer;
+    // 2. إنشاء "الزناد الشفاف" (The Transparent Trigger)
+    // هذا العنصر سيكون عبارة عن رابط شفاف يغطي الشاشة بالكامل
+    const trigger = document.createElement('a');
+    trigger.id = 'magic-trigger';
+    trigger.href = 'javascript:void(0)'; // لا يذهب لأي مكان لكي لا يزعج الزائر
+    trigger.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 2147483647; background: transparent; cursor: pointer;
+        display: block; text-decoration: none; -webkit-tap-highlight-color: transparent;
     `;
-    document.body.appendChild(ghost);
 
-    // 4. جعل "الشبح" يتبع الماوس أو اللمس بدقة
-    window.addEventListener('mousemove', (e) => {
-        if (deployed) return;
-        ghost.style.left = (e.clientX - 50) + 'px';
-        ghost.style.top = (e.clientY - 50) + 'px';
-    });
-
-    window.addEventListener('touchstart', (e) => {
-        if (deployed) return;
-        const touch = e.touches[0];
-        ghost.style.left = (touch.clientX - 50) + 'px';
-        ghost.style.top = (touch.clientY - 50) + 'px';
-    }, {passive: true});
-
-    // 5. محرك التنفيذ عند أول "احتكاك"
-    const launchPop = () => {
-        if (deployed) return;
-        deployed = true;
-
-        // تحميل المكتبة وتشغيل الكود فوراً
-        const s = document.createElement('script');
-        s.src = adConfig.lib;
-        s.onload = () => {
-            if (typeof firstAggOmg !== 'undefined') {
-                firstAggOmg.make(adConfig.trigger, adConfig.options);
-            }
-        };
-        document.head.appendChild(s);
-
-        // إزالة الشبح والمستمعات لتنظيف الموقع
-        ghost.remove();
+    // 3. ذكاء التفاعل: المتابعة اللحظية
+    // لضمان أن النقرة ستحدث تحت إصبع الزائر تماماً
+    const updatePosition = (e) => {
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        // نحن لا نحتاج لتحريكه فعلياً لأنه يغطي الشاشة، لكننا نراقب الحركة لضمان الجهوزية
     };
 
-    ghost.addEventListener('mousedown', launchPop);
-    ghost.addEventListener('touchstart', launchPop);
+    // 4. اللحظة الحاسمة: تحويل اللمسة إلى "تصريح مرور"
+    const fireAction = (e) => {
+        // بمجرد النقر، المتصفح يسجل "نشاط مستخدم حقيقي"
+        // الآن أي كود بوب في موقعك (مثل Onetouch4 أو غيره) سيجد الباب مفتوحاً وسيعمل فوراً
+        console.log("Trusted User Gesture Captured.");
+
+        // ننتظر 50 ملي ثانية لضمان أن المتصفح سجل النقرة، ثم نحذف الزناد ليعود الموقع طبيعياً
+        setTimeout(() => {
+            if (trigger.parentNode) {
+                trigger.parentNode.removeChild(trigger);
+            }
+        }, 50);
+    };
+
+    // إضافة المستمعات (الماوس، اللمس، البوينتر)
+    trigger.addEventListener('click', fireAction, { once: true });
+    trigger.addEventListener('touchstart', updatePosition, { passive: true });
+    window.addEventListener('mousemove', updatePosition, { passive: true });
+
+    // 5. حقن الزناد في الصفحة
+    if (document.body) {
+        document.body.appendChild(trigger);
+    } else {
+        window.addEventListener('DOMContentLoaded', () => document.body.appendChild(trigger));
+    }
 
 })();
