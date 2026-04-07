@@ -1,79 +1,58 @@
-// تشغيل الكود فور اكتمال تحميل محتوى الصفحة
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. استخراج المعامل 'a' من الرابط
+    const url = new URL(window.location.href);
+    const actionType = url.searchParams.get('a');
 
-    // 1. استخراج قيمة المعامل 'a' من رابط الصفحة
-    const urlParams = new URLSearchParams(window.location.search);
-    const actionType = urlParams.get('a');
+    if (!['1', '2', '3', '4'].includes(actionType)) return;
 
-    // 2. التحقق من القيم المسموحة
-    if (!['1', '2', '3', '4'].includes(actionType)) {
-        return;
+    // --- [تعديل هام: تنظيف الرابط من سجل المتصفح فوراً] ---
+    // هذا السطر يمسح البراميترات من شريط العنوان ومن "زر الرجوع" دون إعادة تحميل الصفحة
+    if (window.history.replaceState) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, "", cleanUrl);
     }
 
-    // دالة للبحث عن رابط eBay والضغط عليه
-    const clickOnEbay = () => {
-        const ebayLink = Array.from(document.querySelectorAll('a'))
-            .find(a => a.href.includes('ebay.us') || a.href.includes('ebay.ca'));
-        
-        if (ebayLink) {
-            console.log("تم العثور على رابط eBay: " + ebayLink.href);
-            ebayLink.click();
-        } else {
-            console.log("لم يتم العثور على روابط eBay في هذه الصفحة.");
-        }
+    // 2. دالة البحث عن الرابط (eBay)
+    const getEbayLink = () => {
+        return document.querySelector('a[href*="ebay.us"], a[href*="ebay.ca"]');
     };
 
-    // دالة مساعدة لتوليد رقم عشوائي
-    const getRandomNumber = (min, max) => Math.random() * (max - min) + min;
+    // 3. تنفيذ النقرة السريعة مع ضمان الريفير
+    const fastClick = (link) => {
+        if (!link) return;
+        
+        // إعدادات لضمان إرسال الريفير لـ eBay
+        link.removeAttribute('rel'); 
+        link.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        
+        // تنفيذ النقرة
+        link.click();
+    };
 
-    // 4. خريطة الإجراءات (السيناريوهات) معدلة لتنتهي بنقرة على eBay
+    // 4. خريطة الإجراءات السريعة (مُعدلة لتكون أسرع ما يمكن)
     const simulationActions = {
-        
-        // السيناريو الأول: انتظار ثم ضغط
         '1': async () => {
-            await new Promise(resolve => setTimeout(resolve, getRandomNumber(1000, 2500)));
-            clickOnEbay();
+            await new Promise(r => setTimeout(r, 400)); // انتظر 0.4 ثانية فقط
+            fastClick(getEbayLink());
         },
-
-        // السيناريو الثاني: تمرير ثم ضغط
         '2': async () => {
-            window.scrollTo({
-                top: getRandomNumber(200, 500),
-                behavior: 'smooth'
-            });
-            await new Promise(resolve => setTimeout(resolve, getRandomNumber(2000, 3500)));
-            clickOnEbay();
+            window.scrollTo({ top: 150, behavior: 'auto' }); 
+            await new Promise(r => setTimeout(r, 300));
+            fastClick(getEbayLink());
         },
-
-        // السيناريو الثالث: حركة ماوس وهمية ثم ضغط
         '3': async () => {
-            await new Promise(resolve => setTimeout(resolve, getRandomNumber(500, 1500)));
-            window.dispatchEvent(new MouseEvent('mousemove', {
-                bubbles: true,
-                clientX: getRandomNumber(100, 500),
-                clientY: getRandomNumber(100, 500)
-            }));
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            clickOnEbay();
+            await new Promise(r => setTimeout(r, 200));
+            fastClick(getEbayLink());
         },
-
-        // السيناريو الرابع: تفاعل معقد ثم ضغط
         '4': async () => {
-            window.scrollTo({
-                top: getRandomNumber(400, 800),
-                behavior: 'smooth'
-            });
-            await new Promise(resolve => setTimeout(resolve, getRandomNumber(2500, 4500)));
-            clickOnEbay();
+            await new Promise(r => setTimeout(r, 800));
+            fastClick(getEbayLink());
         }
     };
 
-    // 5. تنفيذ السيناريو
     try {
         if (simulationActions[actionType]) {
             await simulationActions[actionType]();
         }
-    } catch (error) {
-        // تجاهل الأخطاء
-    }
+    } catch (e) {}
 });
