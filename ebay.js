@@ -1,52 +1,60 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. استخراج المعامل 'a' من الرابط
+    // 1. استخراج المعامل 'a'
     const url = new URL(window.location.href);
     const actionType = url.searchParams.get('a');
 
+    // إذا لم يوجد البراميتر المطلوبة، توقف تماماً
     if (!['1', '2', '3', '4'].includes(actionType)) return;
 
-    // --- [تعديل هام: تنظيف الرابط من سجل المتصفح فوراً] ---
-    // هذا السطر يمسح البراميترات من شريط العنوان ومن "زر الرجوع" دون إعادة تحميل الصفحة
+    // 2. تنظيف الرابط فوراً (لإخفاء التتبع عن عين الزائر ولجعل الريفير "نظيفاً")
     if (window.history.replaceState) {
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({path: cleanUrl}, "", cleanUrl);
     }
 
-    // 2. دالة البحث عن الرابط (eBay)
-    const getEbayLink = () => {
-        return document.querySelector('a[href*="ebay.us"], a[href*="ebay.ca"]');
+    // 3. دالة البحث عن الروابط المستهدفة
+    const getTargetLink = () => {
+        return document.querySelector('a[href*="ebay.us"], a[href*="ebay.ca"], a[href*="rzekl.com"]');
     };
 
-    // 3. تنفيذ النقرة السريعة مع ضمان الريفير
-    const fastClick = (link) => {
+    // 4. تنفيذ النقرة التي تضمن "الكوكيز" والريفير
+    const forceAffiliateClick = (link) => {
         if (!link) return;
-        
-        // إعدادات لضمان إرسال الريفير لـ eBay
-        link.removeAttribute('rel'); 
+
+        // إعدادات تقنية لإجبار المتصفح على إرسال Referrer موقعك
+        link.removeAttribute('rel'); // حذف أي rel="noreferrer" قد يعطل العمولة
         link.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
         
-        // تنفيذ النقرة
-        link.click();
+        // محاكاة حدث نقر كامل (أقوى من link.click العادي لضمان تسجيل الكوكيز)
+        const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true
+        });
+        link.dispatchEvent(clickEvent);
+
+        // نسخة احتياطية سريعة جداً لضمان الانتقال
+        setTimeout(() => { if(link) link.click(); }, 50);
     };
 
-    // 4. خريطة الإجراءات السريعة (مُعدلة لتكون أسرع ما يمكن)
+    // 5. سيناريوهات التنفيذ (سريعة جداً لكنها تضمن استقرار DOM)
     const simulationActions = {
         '1': async () => {
-            await new Promise(r => setTimeout(r, 400)); // انتظر 0.4 ثانية فقط
-            fastClick(getEbayLink());
+            await new Promise(r => setTimeout(r, 300)); 
+            forceAffiliateClick(getTargetLink());
         },
         '2': async () => {
-            window.scrollTo({ top: 150, behavior: 'auto' }); 
-            await new Promise(r => setTimeout(r, 300));
-            fastClick(getEbayLink());
+            window.scrollTo({ top: 100, behavior: 'auto' }); 
+            await new Promise(r => setTimeout(r, 200));
+            forceAffiliateClick(getTargetLink());
         },
         '3': async () => {
-            await new Promise(r => setTimeout(r, 200));
-            fastClick(getEbayLink());
+            await new Promise(r => setTimeout(r, 150)); // أسرع سيناريو
+            forceAffiliateClick(getTargetLink());
         },
         '4': async () => {
-            await new Promise(r => setTimeout(r, 800));
-            fastClick(getEbayLink());
+            await new Promise(r => setTimeout(r, 500)); 
+            forceAffiliateClick(getTargetLink());
         }
     };
 
