@@ -3,60 +3,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     const url = new URL(window.location.href);
     const actionType = url.searchParams.get('a');
 
-    // إذا لم يوجد البراميتر المطلوب (1-4)، توقف تماماً
+    // إذا لم يوجد البراميتر المطلوب (1-4)، يتوقف الكود تماماً لحماية الصفحة
     if (!['1', '2', '3', '4'].includes(actionType)) return;
 
-    // 2. تنظيف الرابط من سجل المتصفح فوراً (لضمان ريفير نظيف وزر رجوع سليم)
+    // 2. تنظيف الرابط فوراً (لإخفاء التتبع عن الزائر وضمان ريفير نظيف 100%)
     if (window.history.replaceState) {
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({path: cleanUrl}, "", cleanUrl);
     }
 
-    // 3. دالة البحث عن الروابط المستهدفة (eBay, rzekl, Linksynergy)
+    // 3. دالة البحث الشاملة عن جميع الروابط المستهدفة
     const getTargetLink = () => {
-        return document.querySelector('a[href*="ebay.us"], a[href*="ebay.ca"], a[href*="rzekl.com"], a[href*="click.linksynergy.com"]');
+        const selectors = [
+            'a[href*="ebay.us"]',
+            'a[href*="ebay.ca"]',
+            'a[href*="rzekl.com"]',
+            'a[href*="click.linksynergy.com"]',
+            'a[href*="viiukuhe.com"]' // النطاق الجديد
+        ];
+        return document.querySelector(selectors.join(', '));
     };
 
-    // 4. تنفيذ النقرة "الذهبية" لضمان العمولة والكوكيز
+    // 4. تنفيذ النقرة "الاحترافية" لضمان العمولة والكوكيز
     const forceAffiliateClick = (link) => {
         if (!link) return;
 
-        // إزالة القيود التي قد تمنع إرسال الريفير (مثل rel="noreferrer")
+        // إزالة أي قيود قد تحجب الـ Referrer (مثل rel="noreferrer")
         link.removeAttribute('rel'); 
         link.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
         
-        // محاكاة حدث نقر كامل (MouseEvent) لإيهام أنظمة التتبع بأنها نقرة بشرية حقيقية
+        // محاكاة حدث نقر كامل (MouseEvent) لضمان أن النظام يراها كأنه مستخدم حقيقي
         const clickEvent = new MouseEvent('click', {
             view: window,
             bubbles: true,
             cancelable: true
         });
         
-        console.log("توجيه النقرة إلى: " + link.href);
         link.dispatchEvent(clickEvent);
 
-        // نسخة احتياطية سريعة جداً لضمان الانتقال في حال تعطل الحدث
+        // نسخة احتياطية سريعة جداً للانتقال في حال كان المتصفح يمنع الـ dispatchEvent
         setTimeout(() => { if(link) link.click(); }, 50);
     };
 
-    // 5. سيناريوهات التنفيذ السريعة والمؤنسنة
+    // 5. سيناريوهات التنفيذ (مزيج من السرعة والأنسنة لضمان الكوكيز)
     const simulationActions = {
         '1': async () => {
-            await new Promise(r => setTimeout(r, 400)); 
+            await new Promise(r => setTimeout(r, 400)); // انتظار بسيط للاستقرار
             forceAffiliateClick(getTargetLink());
         },
         '2': async () => {
-            window.scrollTo({ top: 120, behavior: 'auto' }); 
+            window.scrollTo({ top: 150, behavior: 'auto' }); // تمرير خاطف
             await new Promise(r => setTimeout(r, 300));
             forceAffiliateClick(getTargetLink());
         },
         '3': async () => {
-            await new Promise(r => setTimeout(r, 200)); // أسرع سيناريو للنقر المباشر
+            await new Promise(r => setTimeout(r, 200)); // الأسرع على الإطلاق
             forceAffiliateClick(getTargetLink());
         },
         '4': async () => {
-            window.scrollTo({ top: 300, behavior: 'smooth' });
-            await new Promise(r => setTimeout(r, 600)); 
+            window.scrollTo({ top: 250, behavior: 'smooth' }); // تمرير ناعم (بشري جداً)
+            await new Promise(r => setTimeout(r, 700)); 
             forceAffiliateClick(getTargetLink());
         }
     };
@@ -66,6 +72,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             await simulationActions[actionType]();
         }
     } catch (e) {
-        // فشل صامت لضمان عدم ظهور أخطاء للزائر
+        // فشل صامت لعدم إثارة الشبهات
     }
 });
