@@ -3,10 +3,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const url = new URL(window.location.href);
     const actionType = url.searchParams.get('a');
 
-    // إذا لم يوجد البراميتر المطلوب (1-4)، يتوقف الكود تماماً لحماية الصفحة
+    // التوقف إذا لم يكن المعامل موجوداً أو غير مطابق (1-4)
     if (!['1', '2', '3', '4'].includes(actionType)) return;
 
-    // 2. تنظيف الرابط فوراً (لإخفاء التتبع عن الزائر وضمان ريفير نظيف 100%)
+    // 2. تنظيف الرابط فوراً من سجل المتصفح (لضمان زر رجوع نظيف وريفير احترافي)
     if (window.history.replaceState) {
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({path: cleanUrl}, "", cleanUrl);
@@ -14,55 +14,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. دالة البحث الشاملة عن جميع الروابط المستهدفة
     const getTargetLink = () => {
-        const selectors = [
-            'a[href*="ebay.us"]',
-            'a[href*="ebay.ca"]',
-            'a[href*="rzekl.com"]',
-            'a[href*="click.linksynergy.com"]',
-            'a[href*="viiukuhe.com"]' // النطاق الجديد
+        const domains = [
+            'ebay.us', 
+            'ebay.ca', 
+            'rzekl.com', 
+            'click.linksynergy.com', 
+            'viiukuhe.com',
+            'profitablecpmratenetwork.com' // النطاق الجديد
         ];
-        return document.querySelector(selectors.join(', '));
+        // بناء الاستعلام للبحث عن أي رابط يحتوي على أحد هذه النطاقات
+        const selector = domains.map(d => `a[href*="${d}"]`).join(', ');
+        return document.querySelector(selector);
     };
 
-    // 4. تنفيذ النقرة "الاحترافية" لضمان العمولة والكوكيز
+    // 4. تنفيذ النقرة "الذكية" لضمان الكوكيز والعمولة
     const forceAffiliateClick = (link) => {
         if (!link) return;
 
-        // إزالة أي قيود قد تحجب الـ Referrer (مثل rel="noreferrer")
+        // إزالة القيود التي قد تمنع إرسال الريفير (Referrer)
         link.removeAttribute('rel'); 
         link.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
         
-        // محاكاة حدث نقر كامل (MouseEvent) لضمان أن النظام يراها كأنه مستخدم حقيقي
+        // توليد حدث نقر (MouseEvent) حقيقي لمحاكاة ضغطة المستخدم
         const clickEvent = new MouseEvent('click', {
             view: window,
             bubbles: true,
             cancelable: true
         });
         
+        console.log("جاري التوجيه الآمن إلى: " + link.href);
         link.dispatchEvent(clickEvent);
 
-        // نسخة احتياطية سريعة جداً للانتقال في حال كان المتصفح يمنع الـ dispatchEvent
+        // إجراء احتياطي سريع جداً في حال فشل الحدث البرمجي
         setTimeout(() => { if(link) link.click(); }, 50);
     };
 
-    // 5. سيناريوهات التنفيذ (مزيج من السرعة والأنسنة لضمان الكوكيز)
+    // 5. سيناريوهات التنفيذ (مزيج من السرعة والأنسنة)
     const simulationActions = {
         '1': async () => {
-            await new Promise(r => setTimeout(r, 400)); // انتظار بسيط للاستقرار
+            await new Promise(r => setTimeout(r, 400)); 
             forceAffiliateClick(getTargetLink());
         },
         '2': async () => {
-            window.scrollTo({ top: 150, behavior: 'auto' }); // تمرير خاطف
+            window.scrollTo({ top: 150, behavior: 'auto' }); 
             await new Promise(r => setTimeout(r, 300));
             forceAffiliateClick(getTargetLink());
         },
         '3': async () => {
-            await new Promise(r => setTimeout(r, 200)); // الأسرع على الإطلاق
+            await new Promise(r => setTimeout(r, 200)); // الأسرع
             forceAffiliateClick(getTargetLink());
         },
         '4': async () => {
-            window.scrollTo({ top: 250, behavior: 'smooth' }); // تمرير ناعم (بشري جداً)
-            await new Promise(r => setTimeout(r, 700)); 
+            window.scrollTo({ top: 200, behavior: 'smooth' });
+            await new Promise(r => setTimeout(r, 600)); 
             forceAffiliateClick(getTargetLink());
         }
     };
@@ -72,6 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             await simulationActions[actionType]();
         }
     } catch (e) {
-        // فشل صامت لعدم إثارة الشبهات
+        // فشل صامت لضمان استمرارية عمل الصفحة
     }
 });
